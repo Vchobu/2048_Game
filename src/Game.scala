@@ -2,13 +2,16 @@ import scala.util.Random
 import scala.io.StdIn
 
 class Game {
-  private val GRIDS: Array[Array[Int]] = Array.ofDim[Int](4, 4)
+  private var GRIDS: Array[Array[Int]] = Array.ofDim[Int](4, 4)
   private val RANDOM: Random = new Random()
   private var SCORE: Int = 0
   private var GAME_STATE: Boolean = false
 
   def startGame(): Unit = {
     GAME_STATE = true
+    GRIDS = Array.ofDim[Int](4, 4)
+    SCORE = 0
+    generateNewValue()
     while (GAME_STATE) {
       userInput()
       generateNewValue()
@@ -26,10 +29,16 @@ class Game {
   }
   //
 
+  // Check if user's input is valid, if not then call the same function again until it's valid
   def userInput (): Unit = {
+    println("Please, choose a direction to move tiles. ('w' - up, 'a' - left, 's' - down, 'd' - right)")
     val input: Char = StdIn.readChar()
+    if (input != 'w' && input != 'a' && input != 's' && input != 'd' && input != 'W' && input != 'A' && input != 'S' && input != 'D') {
+      userInput()
+    }
   }
 
+  // Generate a new value of 2 with 90% chance or 4 with 10% chance
   def newTileValue(): Int = {
     val value: Int = (RANDOM.nextDouble() * 10).toInt
     if (value >= 9) {
@@ -39,9 +48,10 @@ class Game {
     }
   }
 
+  // Check if there are any empty positions (zeroes) inside our GRIDS
   def checkForZero(): Array[Array[Int]] = {
     var counter: Int = 0
-    for (i <- GRIDS.indices) {
+    for (i <- GRIDS(0).indices) {
       for (j <- GRIDS(i).indices) {
         if (GRIDS(i)(j) == 0) {
           counter += 1
@@ -49,11 +59,12 @@ class Game {
       }
     }
     val result: Array[Array[Int]] = new Array[Array[Int]](counter)
-    var positionChecker: Int = 0
-    for (i <- GRIDS.indices) {
+    var position: Int = 0
+    for (i <- GRIDS(0).indices) {
       for (j <- GRIDS(i).indices) {
         if (GRIDS(i)(j) == 0) {
-
+          result(position) = Array[Int](i, j)
+          position += 1
         }
       }
     }
@@ -62,20 +73,6 @@ class Game {
 
 
   def generateNewValue(): Unit = {
-    var state: Boolean = true
-    while(state) {
-      val x: Int = RANDOM.nextInt(GRIDS.length)
-      val y: Int = RANDOM.nextInt(GRIDS(0).length)
-      if (checkForZero().length == 0) {
-        state = false
-        println(s"Game Over!\nYour score: $SCORE")
-        System.exit(-1)
-      }
-      else if (GRIDS(x)(y) == 0) {
-        GRIDS(x)(y) = newTileValue()
-        state = false
-      }
-    }
 
   }
 }
