@@ -12,9 +12,11 @@ class Game {
     GRIDS = Array.ofDim[Int](4, 4)
     SCORE = 0
     generateNewValue()
+    generateNewValue()
+    grid_dispaly()
     while (GAME_STATE) {
       userInput()
-      generateNewValue()
+      //generateNewValue()
       grid_dispaly()
     }
   }
@@ -32,16 +34,24 @@ class Game {
   // Check if user's input is valid, if not then call the same function again until it's valid
   def userInput (): Unit = {
     println("Please, choose a direction to move tiles. ('w' - up, 'a' - left, 's' - down, 'd' - right)")
-    val input: Char = StdIn.readChar()
-    if (input != 'w' && input != 'a' && input != 's' && input != 'd' && input != 'W' && input != 'A' && input != 'S' && input != 'D') {
-      userInput()
-    }
+      val inputs: Array[Char] = Array('w', 'a', 's', 'd', 'W', 'A', 'S', 'D')
+      var state: Boolean = true
+      var input: Char = '0'
+      while(state) {
+        input = StdIn.readChar()
+        if (inputs.contains(input)) {
+          state = false
+        } else {
+          println("Please, enter a valid choice.")
+        }
+      }
+      gridMover(input)
   }
 
   // Generate a new value of 2 with 90% chance or 4 with 10% chance
   def newTileValue(): Int = {
-    val value: Int = (RANDOM.nextDouble() * 10).toInt
-    if (value >= 9) {
+    val value: Int = RANDOM.nextInt(10)
+    if (value == 9) {
        4
     } else {
        2
@@ -71,9 +81,55 @@ class Game {
     result
   }
 
+  def possibleMove(): Boolean = {
+    println("possible move function")
+    true
+  }
 
+  def gameOver(): Unit = {
+
+  }
+
+  /**
+  def gridMover(direction: Char): Unit = {
+    val temp: Array[Array[Int]] = Array.ofDim(4, 4)
+    var counter: Int = 0
+    for (i <- GRIDS.indices) {
+      val in: Array[Int] = new Array[Int](4)
+      for (j <- GRIDS(i).indices) {
+        if (counter == j) {
+          in(counter) = GRIDS(i)(j)
+        }
+      }
+      temp(counter) = in
+      counter += 1
+    }
+    for (i <- temp(0).indices) {
+      for (j <- temp(i).indices) {
+        print(temp(i)(j))
+      }
+      println()
+    }
+    println("gridMover function")
+
+  }
+  **/
+
+  def gridMover(direction: Char): Unit = {
+
+  }
+
+  // Check if there are empty grids to generate a new value. If not, then check for possible moves and if there are none, game over.
   def generateNewValue(): Unit = {
-
+      val temp: Array[Array[Int]] = checkForZero()
+      val positions: Array[Int] = temp(RANDOM.nextInt(temp.length))
+      if (temp.length == 0) {
+        possibleMove()
+      } else {
+        //GRIDS(positions(0))(positions(1)) = newTileValue()
+        GRIDS(0)(0) = newTileValue()
+        GRIDS(0)(1) = newTileValue()
+      }
   }
 }
 
