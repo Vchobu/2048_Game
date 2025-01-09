@@ -13,11 +13,10 @@ class Game {
     SCORE = 0
     //generateNewValue()
     //generateNewValue()
-    GRIDS(0)(3) = 16
-    GRIDS(1)(3) = 2
-    GRIDS(2)(3) = 4
-    GRIDS(3)(3) = 8
-
+    GRIDS(0)(0) = 2
+    GRIDS(1)(0) = 2
+    GRIDS(2)(0) = 4
+    GRIDS(3)(0) = 8
 
     grid_dispaly(GRIDS)
     while (GAME_STATE) {
@@ -42,11 +41,15 @@ class Game {
     var state: Boolean = true
     var input: Char = '0'
     while (state) {
-      input = StdIn.readChar()
+      try {
+        input = StdIn.readChar()
+      } catch {
+        case e: java.lang.StringIndexOutOfBoundsException => println()
+      }
       if (inputs.contains(input)) {
         state = false
       } else {
-        println("Please, enter a valid choice.")
+        println("Please, enter a valid direction.")
       }
     }
     gridMover(input)
@@ -73,12 +76,12 @@ class Game {
       }
     }
     val result: Array[Array[Int]] = new Array[Array[Int]](counter)
-    var position: Int = 0
+    var pos: Int = 0
     for (i <- GRIDS(0).indices) {
       for (j <- GRIDS(i).indices) {
         if (GRIDS(i)(j) == 0) {
-          result(position) = Array[Int](i, j)
-          position += 1
+          result(pos) = Array[Int](i, j)
+          pos += 1
         }
       }
     }
@@ -135,31 +138,71 @@ class Game {
   def gridMover(direction: Char): Unit = {
     val counter: Int = counterNonZero(GRIDS)
     val positions: Array[Array[Int]] = new Array[Array[Int]](counter)
-    var position: Int = 0
+    val moveable: Array[Array[Int]] = Array.ofDim(4, 4)
+    var pos: Int = 0
     for (i <- GRIDS(0).indices) {
       for (j <- GRIDS(i).indices) {
         if (GRIDS(i)(j) != 0) {
-          positions(position) = Array[Int](i, j)
-          position += 1
+          positions(pos) = Array[Int](i, j)
+          pos += 1
         }
       }
     }
     if (direction == 'w' || direction == 'W') {
       for (i <- positions.indices) {
-        //Check if position is not zero
-        if (positions(i)(0) != 0) {
-          for (y <- 0 to positions(i)(0)) {
-            if (GRIDS(y)(positions(i)(1)) == 0) {
-              GRIDS(y)(positions(i)(1)) = GRIDS(positions(i)(0))(positions(i)(1))
-              GRIDS(positions(i)(0))(positions(i)(1)) = 0
-            } else if (GRIDS(y)(positions(i)(1)) == GRIDS(positions(i)(0))(positions(i)(1))) {
-              GRIDS(y)(positions(i)(1)) = GRIDS(y)(positions(i)(1)) * 2
-              GRIDS(positions(i)(0))(positions(i)(1)) = 0
+        val row = positions(i)(0)
+        val col = positions(i)(1)
+        //Check if pos is not zero
+        if (row != 0) {
+          for (y <- 0 to row) {
+            if (GRIDS(y)(col) == 0) {
+              GRIDS(y)(col) = GRIDS(row)(col)
+              GRIDS(row)(col) = 0
+            } else if (GRIDS(y)(col) == GRIDS(row)(col) && moveable(y)(col) != 1) {
+              GRIDS(y)(col) *= 2
+              GRIDS(row)(col) = 0
+              moveable(y)(col) = 1
             }
           }
         }
       }
-      grid_dispaly(GRIDS)
+    } else if (direction == 'a' || direction == 'A') {
+      for (i <- positions.indices) {
+        val row = positions(i)(0)
+        val col = positions(i)(1)
+        //Check if pos is not zero
+        if (col != 0) {
+          for (x <- col to 0 by -1) {
+            if (GRIDS(x)(col) == 0) {
+              GRIDS(x)(col) = GRIDS(row)(col)
+              GRIDS(row)(col) = 0
+            } else if (GRIDS(x)(col) == GRIDS(row)(col) && x != row && moveable(x)(col) != 1) {
+              GRIDS(x)(col) *= 2
+              GRIDS(row)(col) = 0
+              moveable(x)(col) = 1
+            }
+          }
+        }
+      }
+    } else if (direction == 's' || direction == 'S') {
+      for (i <- positions.indices) {
+        val row = positions(i)(0)
+        val col = positions(i)(1)
+        //Check if pos is not 3
+        if (row != 3) {
+          for (y <- 3 to row by -1) {
+            if (GRIDS(y)(col) == 0) {
+              GRIDS(y)(col) = GRIDS(row)(col)
+              GRIDS(row)(col) = 0
+            } else if (GRIDS(y)(col) == GRIDS(row)(col) && moveable(y)(col) != 1) {
+              GRIDS(y)(col) *= 2
+              GRIDS(row)(col) = 0
+              moveable(y)(col) = 1
+            }
+          }
+        }
+      }
+      grid_dispaly(moveable)
     }
   }
 
