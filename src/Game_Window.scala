@@ -1,3 +1,11 @@
+/**
+ * Before execution, make sure to mark src directory as "Sources Root"
+ * To do this click right mouse button on src -> Mark Directory as -> Sources Root
+ * After that directory icon will become blue.
+ *
+ * Also, don't forget to add FunGraphics as library
+ */
+
 import scala.util.Random
 import hevs.graphics.FunGraphics
 
