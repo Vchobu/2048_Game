@@ -1,8 +1,8 @@
 import scala.util.Random
 import hevs.graphics.FunGraphics
 
-import java.awt.event.KeyEvent
-import java.awt.{Color, Rectangle}
+import java.awt.event.{KeyEvent, KeyAdapter}
+import java.awt.Color
 
 
 class Game_Window {
@@ -36,8 +36,7 @@ class Game_Window {
         // Draw the value centered in the rectangle
         val value: String = GRIDS(row)(col).toString
         if (value != "0") {
-          val textWidth: Int = value.length * 20
-          val textX: Int = x + (tileWidth - textWidth) / 2 // Adjust for approximate centering
+          val textX: Int = x + (tileWidth - value.length * 20) / 2 // Adjust for horizontal centering based on number of digits
           val textY: Int = y + tileHeight / 2 + 15 // Adjust for vertical centering
           val color: Color = if (value.toInt <= 4) new Color(119, 110, 101) else new Color(249, 246, 242)
           GRAPHICS.drawString(textX, textY, value, color, 35)
@@ -47,6 +46,7 @@ class Game_Window {
     // Draw the score at the bottom of the window
     GRAPHICS.drawString(padding, HEIGHT - padding, s"Score: $SCORE", new Color(249, 246, 242), 40)
   }
+
 
   def getTileColor(value: Int): Color = {
     value match {
@@ -62,11 +62,11 @@ class Game_Window {
       case 512 => new Color(237, 204, 97)  // 512 tile color
       case 1024 => new Color(237, 204, 97) // 1024 tile color
       case 2048 => new Color(237, 204, 97) // 2048 tile color
-      case _ => new Color(119, 110, 101)   // Default color for large values
+      case _ => new Color(119, 110, 101)   // Default color for other values
     }
   }
 
-  def newGame(): Unit = {
+  def startGame(): Unit = {
     GRIDS = Array.ofDim(4, 4)  // Reset the grid to an empty 4x4 grid
     SCORE = 0  // Reset the score
     GAME_STATE = true  // Set the game state to true (game is active)
@@ -78,34 +78,40 @@ class Game_Window {
 
   def gameOver(): Unit = {
     GAME_STATE = false
-    GRAPHICS.clear(Color.BLACK)
-    GRAPHICS.setColor(Color.WHITE)
-    GRAPHICS.drawString(WIDTH / 2 - 50, HEIGHT / 2, s"Game Over! Score: $SCORE")
-    GRAPHICS.drawString(WIDTH / 2 - 50, HEIGHT / 2 + 20, "Restart? Y/N")
-  }
 
-  def startGame(): Unit = {
-    newGame()  // Initialize a new game
-    userInput()  // Set up key listeners for user input
-    while (GAME_STATE) {
-      if (!possibleMove()) {
-        gameOver()
-      }
+    val maxSize: Int = 450
+    val animationSpeed: Int = 20 // Adjust this value to control the speed of the animation
+    val stepSize: Int = 25  // Size increment for each frame
+
+    var currentSize: Int = 0
+
+    // Animation loop
+    while (currentSize <= maxSize) {
+      update()
+      GRAPHICS.setColor(Color.BLACK)
+      GRAPHICS.drawFillRect(WIDTH / 2 - currentSize / 2, HEIGHT / 2 - currentSize / 2, currentSize, currentSize)
+      currentSize += stepSize
+      Thread.sleep(animationSpeed) // Pause briefly to create the animation effect
     }
+
+    // Draw the final message on the screen
+    GRAPHICS.drawString(WIDTH / 2 - 150, HEIGHT / 2, s"Game Over! Score: $SCORE", Color.WHITE, 30)
+    GRAPHICS.drawString(WIDTH / 2 - 100, HEIGHT / 2 + 30, "Restart? Y/N", Color.WHITE, 30)
   }
 
 
   def userInput(): Unit = {
-    GRAPHICS.setKeyManager(new java.awt.event.KeyAdapter {
+    GRAPHICS.setKeyManager(new KeyAdapter {
       override def keyPressed(e: KeyEvent): Unit = {
         e.getKeyCode match {
-          case KeyEvent.VK_W | KeyEvent.VK_UP => move('w')
-          case KeyEvent.VK_A | KeyEvent.VK_LEFT => move('a')
-          case KeyEvent.VK_S | KeyEvent.VK_DOWN => move('s')
-          case KeyEvent.VK_D | KeyEvent.VK_RIGHT => move('d')
+          case KeyEvent.VK_W | KeyEvent.VK_UP if GAME_STATE => move('w')
+          case KeyEvent.VK_A | KeyEvent.VK_LEFT if GAME_STATE => move('a')
+          case KeyEvent.VK_S | KeyEvent.VK_DOWN if GAME_STATE => move('s')
+          case KeyEvent.VK_D | KeyEvent.VK_RIGHT if GAME_STATE => move('d')
           case KeyEvent.VK_Y if !GAME_STATE => startGame()
           case KeyEvent.VK_N if !GAME_STATE => System.exit(-1)
           case KeyEvent.VK_ESCAPE => gameOver()
+          case _ =>
         }
       }
     })
@@ -120,12 +126,15 @@ class Game_Window {
     }
     generateNewValue()
     update()
+    if (!possibleMove()) {
+      gameOver()
+    }
   }
 
   def moveUp(): Unit = {
     for (col <- 0 until 4) {
       var pointer = 0
-      val merged = Array.fill(4)(false) // Track merged cells
+      val merged = Array.fill(4)(false)
       for (row <- 0 until 4) {
         if (GRIDS(row)(col) != 0) {
           if (pointer > 0 && GRIDS(pointer - 1)(col) == GRIDS(row)(col) && !merged(pointer - 1)) {
@@ -148,7 +157,7 @@ class Game_Window {
   def moveLeft(): Unit = {
     for (row <- GRIDS) {
       var pointer = 0
-      val merged = Array.fill(4)(false) // Track merged cells
+      val merged = Array.fill(4)(false)
       for (j <- row.indices) {
         if (row(j) != 0) {
           if (pointer > 0 && row(pointer - 1) == row(j) && !merged(pointer - 1)) {
@@ -171,7 +180,7 @@ class Game_Window {
   def moveDown(): Unit = {
     for (col <- 0 until 4) {
       var pointer = 3
-      val merged = Array.fill(4)(false) // Track merged cells
+      val merged = Array.fill(4)(false)
       for (row <- (0 until 4).reverse) {
         if (GRIDS(row)(col) != 0) {
           if (pointer < 3 && GRIDS(pointer + 1)(col) == GRIDS(row)(col) && !merged(pointer + 1)) {
@@ -194,7 +203,7 @@ class Game_Window {
   def moveRight(): Unit = {
     for (row <- GRIDS) {
       var pointer = row.length - 1
-      val merged = Array.fill(4)(false) // Track merged cells
+      val merged = Array.fill(4)(false)
       for (j <- row.indices.reverse) {
         if (row(j) != 0) {
           if (pointer < row.length - 1 && row(pointer + 1) == row(j) && !merged(pointer + 1)) {
@@ -238,12 +247,7 @@ class Game_Window {
 
   def generateNewValue(): Unit = {
     val temp: Array[Array[Int]] = checkForZero()
-    if (temp.length == 0) {
-      if (!possibleMove()) {
-        GAME_STATE = false
-        gameOver()
-      }
-    } else {
+    if (temp.length != 0) {
       val positions: Array[Int] = temp(RANDOM.nextInt(temp.length))
       GRIDS(positions(0))(positions(1)) = if (RANDOM.nextInt(10) == 9) 4 else 2
     }
@@ -259,10 +263,11 @@ class Game_Window {
     }
     false
   }
-
-
 }
 
 object Game extends App {
-  new Game_Window().startGame()
+  val game: Game_Window = new Game_Window
+  game.userInput()
+  game.startGame()
+  //new Game_Window().startGame()
 }
